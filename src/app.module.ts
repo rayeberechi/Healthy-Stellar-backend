@@ -9,6 +9,8 @@ import { MedicalRecordsModule } from './medical-records/medical-records.module';
 import { CommonModule } from './common/common.module';
 import { PatientModule } from './patients/patients.module';
 import { LaboratoryModule } from './laboratory/laboratory.module';
+import { DiagnosisModule } from './diagnosis/diagnosis.module';
+import { TreatmentPlanningModule } from './treatment-planning/treatment-planning.module';
 import { DatabaseConfig } from './config/database.config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -42,6 +44,8 @@ import { AuditLogEntity } from './common/audit/audit-log.entity';
     MedicalRecordsModule,
     PatientModule,
     LaboratoryModule,
+    DiagnosisModule,
+    TreatmentPlanningModule,
     ValidationModule
   ],
   controllers: [AppController, HealthController],

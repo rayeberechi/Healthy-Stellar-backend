@@ -95,3 +95,46 @@ export enum CodeType {
   ICD10_PCS = 'ICD10-PCS',
   HCPCS = 'HCPCS',
 }
+
+export enum DiagnosisStatus {
+  PRELIMINARY = 'preliminary',
+  CONFIRMED = 'confirmed',
+  RULED_OUT = 'ruled_out',
+  DIFFERENTIAL = 'differential',
+}
+
+export enum DiagnosisSeverity {
+  MILD = 'mild',
+  MODERATE = 'moderate',
+  SEVERE = 'severe',
+  CRITICAL = 'critical',
+}
+
+export enum TreatmentPlanStatus {
+  DRAFT = 'draft',
+  ACTIVE = 'active',
+  ON_HOLD = 'on_hold',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+}
+
+export enum ProcedureStatus {
+  SCHEDULED = 'scheduled',
+  IN_PROGRESS = 'in_progress',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+  RESCHEDULED = 'rescheduled',
+}
+
+export enum AlertSeverity {
+  INFO = 'info',
+  WARNING = 'warning',
+  CRITICAL = 'critical',
+}
+
+export enum AlertType {
+  DRUG_INTERACTION = 'drug_interaction',
+  GUIDELINE_RECOMMENDATION = 'guideline_recommendation',
+  CONTRAINDICATION = 'contraindication',
+  DUPLICATE_THERAPY = 'duplicate_therapy',
+}
