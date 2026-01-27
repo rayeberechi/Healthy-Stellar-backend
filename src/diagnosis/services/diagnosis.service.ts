@@ -1,0 +1,206 @@
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, FindOptionsWhere, Between } from 'typeorm';
+import { Diagnosis } from '../entities/diagnosis.entity';
+import { DiagnosisHistory } from '../entities/diagnosis-history.entity';
+import { CreateDiagnosisDto, UpdateDiagnosisDto, SearchDiagnosisDto } from '../dto/diagnosis.dto';
+import { MedicalCodeService } from '../../billing/services/medical-code.service';
+import { CodeType } from '../../common/enums';
+
+@Injectable()
+export class DiagnosisService {
+  constructor(
+    @InjectRepository(Diagnosis)
+    private readonly diagnosisRepository: Repository<Diagnosis>,
+    @InjectRepository(DiagnosisHistory)
+    private readonly diagnosisHistoryRepository: Repository<DiagnosisHistory>,
+    private readonly medicalCodeService: MedicalCodeService,
+  ) {}
+
+  async create(createDiagnosisDto: CreateDiagnosisDto): Promise<Diagnosis> {
+    // Validate ICD-10 code exists and is active
+    const icd10Code = await this.medicalCodeService.findById(createDiagnosisDto.icd10CodeId);
+
+    if (!icd10Code) {
+      throw new BadRequestException('Invalid ICD-10 code ID');
+    }
+
+    // Verify it's an ICD-10 code (CM or PCS)
+    if (icd10Code.codeType !== CodeType.ICD10_CM && icd10Code.codeType !== CodeType.ICD10_PCS) {
+      throw new BadRequestException('Code must be ICD-10-CM or ICD-10-PCS type');
+    }
+
+    if (!icd10Code.isActive) {
+      throw new BadRequestException('ICD-10 code is not active');
+    }
+
+    const diagnosis = this.diagnosisRepository.create(createDiagnosisDto);
+    return await this.diagnosisRepository.save(diagnosis);
+  }
+
+  async findById(id: string): Promise<Diagnosis> {
+    const diagnosis = await this.diagnosisRepository.findOne({
+      where: { id },
+      relations: ['icd10Code', 'history'],
+    });
+
+    if (!diagnosis) {
+      throw new NotFoundException(`Diagnosis with ID ${id} not found`);
+    }
+
+    return diagnosis;
+  }
+
+  async findByPatientId(patientId: string): Promise<Diagnosis[]> {
+    return await this.diagnosisRepository.find({
+      where: { patientId },
+      relations: ['icd10Code'],
+      order: { diagnosisDate: 'DESC' },
+    });
+  }
+
+  async update(id: string, updateDiagnosisDto: UpdateDiagnosisDto): Promise<Diagnosis> {
+    const diagnosis = await this.findById(id);
+
+    // Track changes for history
+    const changes: Record<string, any> = {};
+    const previousValues: Record<string, any> = {};
+
+    Object.keys(updateDiagnosisDto).forEach((key) => {
+      if (key !== 'updatedBy' && key !== 'changeReason' && updateDiagnosisDto[key] !== undefined) {
+        previousValues[key] = diagnosis[key];
+        changes[key] = updateDiagnosisDto[key];
+      }
+    });
+
+    // Create history entry if there are changes
+    if (Object.keys(changes).length > 0) {
+      const changeType = this.determineChangeType(changes);
+      await this.createHistoryEntry(
+        diagnosis.id,
+        changeType,
+        previousValues,
+        changes,
+        updateDiagnosisDto.changeReason,
+        updateDiagnosisDto.updatedBy,
+      );
+    }
+
+    // Update diagnosis
+    Object.assign(diagnosis, updateDiagnosisDto);
+    return await this.diagnosisRepository.save(diagnosis);
+  }
+
+  async search(searchDto: SearchDiagnosisDto): Promise<Diagnosis[]> {
+    const where: FindOptionsWhere<Diagnosis> = {};
+
+    if (searchDto.patientId) {
+      where.patientId = searchDto.patientId;
+    }
+
+    if (searchDto.providerId) {
+      where.providerId = searchDto.providerId;
+    }
+
+    if (searchDto.status) {
+      where.status = searchDto.status;
+    }
+
+    if (searchDto.severity) {
+      where.severity = searchDto.severity;
+    }
+
+    if (searchDto.isChronic !== undefined) {
+      where.isChronic = searchDto.isChronic;
+    }
+
+    if (searchDto.isPrimary !== undefined) {
+      where.isPrimary = searchDto.isPrimary;
+    }
+
+    // Handle date range
+    if (searchDto.diagnosisDateFrom && searchDto.diagnosisDateTo) {
+      where.diagnosisDate = Between(
+        new Date(searchDto.diagnosisDateFrom),
+        new Date(searchDto.diagnosisDateTo),
+      );
+    }
+
+    const queryBuilder = this.diagnosisRepository
+      .createQueryBuilder('diagnosis')
+      .leftJoinAndSelect('diagnosis.icd10Code', 'icd10Code')
+      .where(where);
+
+    // Handle ICD-10 code search
+    if (searchDto.icd10Code) {
+      queryBuilder.andWhere('icd10Code.code LIKE :code', {
+        code: `%${searchDto.icd10Code}%`,
+      });
+    }
+
+    return await queryBuilder.orderBy('diagnosis.diagnosisDate', 'DESC').getMany();
+  }
+
+  async delete(id: string): Promise<void> {
+    const diagnosis = await this.findById(id);
+    await this.diagnosisRepository.remove(diagnosis);
+  }
+
+  async getPatientActiveDiagnoses(patientId: string): Promise<Diagnosis[]> {
+    return await this.diagnosisRepository.find({
+      where: {
+        patientId,
+        status: 'confirmed' as any,
+        resolvedDate: null as any,
+      },
+      relations: ['icd10Code'],
+      order: { diagnosisDate: 'DESC' },
+    });
+  }
+
+  async getPatientChronicConditions(patientId: string): Promise<Diagnosis[]> {
+    return await this.diagnosisRepository.find({
+      where: {
+        patientId,
+        isChronic: true,
+      },
+      relations: ['icd10Code'],
+      order: { diagnosisDate: 'DESC' },
+    });
+  }
+
+  async getDiagnosisHistory(diagnosisId: string): Promise<DiagnosisHistory[]> {
+    return await this.diagnosisHistoryRepository.find({
+      where: { diagnosisId },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  private async createHistoryEntry(
+    diagnosisId: string,
+    changeType: string,
+    previousValues: Record<string, any>,
+    newValues: Record<string, any>,
+    changeReason?: string,
+    changedBy?: string,
+  ): Promise<DiagnosisHistory> {
+    const history = this.diagnosisHistoryRepository.create({
+      diagnosisId,
+      changeType,
+      previousValues,
+      newValues,
+      changeReason,
+      changedBy,
+    });
+
+    return await this.diagnosisHistoryRepository.save(history);
+  }
+
+  private determineChangeType(changes: Record<string, any>): string {
+    if (changes.status) return 'status_change';
+    if (changes.severity) return 'severity_change';
+    if (changes.clinicalNotes) return 'notes_update';
+    if (changes.icd10CodeId) return 'code_update';
+    return 'general_update';
+  }
+}
