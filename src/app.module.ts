@@ -24,6 +24,7 @@ import { MedicalDataValidationPipe } from './common/validation/medical-data.vali
 import { AuditLogEntity } from './common/audit/audit-log.entity';
 import { NotificationsModule } from './notifications/notifications.module';
 import { QueueModule } from './queues/queue.module';
+import { FhirModule } from './fhir/fhir.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { QueueModule } from './queues/queue.module';
     InfectionControlModule,
     NotificationsModule,
     QueueModule,
+    FhirModule,
   ],
   controllers: [AppController, HealthController],
   providers: [
