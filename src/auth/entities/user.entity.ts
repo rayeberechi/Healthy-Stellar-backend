@@ -68,6 +68,8 @@ export class User {
   @Column({ type: 'text', nullable: true })
   specialization: string;
 
+  @Column({ default: true })
+  emergencyAccessEnabled: boolean;
   @Column({ nullable: true, length: 255 })
   specialty: string;
 
