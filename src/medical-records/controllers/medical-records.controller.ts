@@ -8,6 +8,7 @@ import {
   Param,
   Query,
   UseGuards,
+  UseInterceptors,
   Req,
   HttpCode,
   HttpStatus,
@@ -17,8 +18,11 @@ import { MedicalRecordsService } from '../services/medical-records.service';
 import { CreateMedicalRecordDto } from '../dto/create-medical-record.dto';
 import { UpdateMedicalRecordDto } from '../dto/update-medical-record.dto';
 import { SearchMedicalRecordsDto } from '../dto/search-medical-records.dto';
+import { AuditInterceptor } from '../../common/audit/audit.interceptor';
 
 @ApiTags('Medical Records')
+@ApiBearerAuth()
+@UseInterceptors(AuditInterceptor)
 @Controller('medical-records')
 export class MedicalRecordsController {
   constructor(private readonly medicalRecordsService: MedicalRecordsService) {}

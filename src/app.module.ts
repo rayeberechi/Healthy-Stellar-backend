@@ -93,6 +93,7 @@ const getUserTrackerFromRequest = (req: any): string => {
 };
 import { TenantInterceptor } from './tenant/interceptors/tenant.interceptor';
 import { AuditLogEntity } from './common/audit/audit-log.entity';
+import { AuditModule } from './common/audit/audit.module';
 
 @Module({
   imports: [
@@ -155,6 +156,8 @@ import { AuditLogEntity } from './common/audit/audit-log.entity';
     QueueModule,
     FhirModule,
     AccessControlModule,
+    StellarModule,
+    AuditModule,
     ReportsModule,
     TenantConfigModule,
   ],
