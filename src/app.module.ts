@@ -26,6 +26,7 @@ import { MedicalEmergencyErrorFilter } from './common/errors/medical-emergency-e
 import { MedicalDataValidationPipe } from './common/validation/medical-data.validator.pipe';
 import { TenantInterceptor } from './tenant/interceptors/tenant.interceptor';
 import { AuditLogEntity } from './common/audit/audit-log.entity';
+import { AuditModule } from './common/audit/audit.module';
 
 @Module({
   imports: [
@@ -88,6 +89,7 @@ import { AuditLogEntity } from './common/audit/audit-log.entity';
     FhirModule,
     AccessControlModule,
     StellarModule,
+    AuditModule,
   ],
   controllers: [AppController, HealthController],
   providers: [
