@@ -1,12 +1,20 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { NestFactory, Reflector } from '@nestjs/core';
+import { ValidationPipe, VersioningType, VERSION_NEUTRAL } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import helmet from 'helmet';
+import { DeprecationInterceptor } from './common/interceptors/deprecation.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Enable URI-based API Versioning
+  app.enableVersioning({
+    type: VersioningType.URI,
+    // Set default version to 1, and fall back to VERSION_NEUTRAL for unversioned routes.
+    defaultVersion: ['1', VERSION_NEUTRAL],
+  });
 
   // Security Headers - Helmet Configuration
   app.use(
@@ -57,6 +65,9 @@ async function bootstrap() {
     exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
     maxAge: 3600,
   });
+
+  app.useGlobalInterceptors(new DeprecationInterceptor(app.get(Reflector)));
+
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalPipes(
     new ValidationPipe({

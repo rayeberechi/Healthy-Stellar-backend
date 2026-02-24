@@ -62,6 +62,7 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
       migrationsRun: false,
 
       // Logging configuration for audit trail
+      // Logging configuration for audit trail and query profiling
       logging: isProduction
         ? ['error', 'warn', 'migration']
         : ['query', 'error', 'warn', 'migration'],
@@ -73,10 +74,10 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
         max: this.configService.get<number>('DB_POOL_MAX', 20),
         // Minimum connection pool size
         min: this.configService.get<number>('DB_POOL_MIN', 2),
-        // Connection timeout (30 seconds)
-        connectionTimeoutMillis: 30000,
-        // Idle timeout (10 minutes) - automatically close idle connections
-        idleTimeoutMillis: 600000,
+        // Connection timeout (default 2 seconds)
+        connectionTimeoutMillis: this.configService.get<number>('DB_CONNECTION_TIMEOUT_MS', 2000),
+        // Idle timeout (default 30 seconds)
+        idleTimeoutMillis: this.configService.get<number>('DB_IDLE_TIMEOUT_MS', 30000),
         // Statement timeout (60 seconds) - prevent long-running queries
         statement_timeout: 60000,
         // Application name for audit logging
@@ -89,8 +90,8 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
       retryAttempts: 3,
       retryDelay: 3000,
 
-      // Transaction management - log slow queries
-      maxQueryExecutionTime: 10000,
+      // Slow query profiling threshold (milliseconds)
+      maxQueryExecutionTime: this.configService.get<number>('DB_SLOW_QUERY_MS', 100),
 
       // Enable automatic query result caching
       cache: {
@@ -142,6 +143,13 @@ export const dataSourceOptions: DataSourceOptions = {
 
   // Enable logging in development
   logging: process.env.NODE_ENV !== 'production',
+  
+  // Enable detailed logging in development for profiling
+  logging:
+    process.env.NODE_ENV === 'production'
+      ? ['error', 'warn', 'migration']
+      : ['query', 'error', 'warn', 'migration'],
+  maxQueryExecutionTime: parseInt(process.env.DB_SLOW_QUERY_MS || '100', 10),
 };
 
 // Export configured DataSource for CLI
