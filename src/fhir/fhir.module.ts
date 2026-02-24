@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+<<<<<<< Updated upstream
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -28,5 +29,28 @@ import { BulkExportJob } from './entities/bulk-export-job.entity';
   controllers: [FhirController],
   providers: [FhirService, BulkExportService, BulkExportProcessor, BulkExportCleanupTask],
   exports: [FhirService, BulkExportService],
+=======
+import { FhirService } from './services/fhir.service';
+import { FhirValidatorService } from './services/fhir-validator.service';
+import { FhirMapperService } from './mappers/fhir-mapper.service';
+import { PatientMapper } from './mappers/patient.mapper';
+import { DocumentReferenceMapper } from './mappers/document-reference.mapper';
+import { ProvenanceMapper } from './mappers/provenance.mapper';
+import { ConsentMapper } from './mappers/consent.mapper';
+import { FhirController } from './controllers/fhir.controller';
+
+@Module({
+  controllers: [FhirController],
+  providers: [
+    FhirService,
+    FhirValidatorService,
+    FhirMapperService,
+    PatientMapper,
+    DocumentReferenceMapper,
+    ProvenanceMapper,
+    ConsentMapper,
+  ],
+  exports: [FhirService, FhirMapperService],
+>>>>>>> Stashed changes
 })
 export class FhirModule {}

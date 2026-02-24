@@ -1,3 +1,4 @@
+import { Controller, Get, Param, Query, UseFilters, UseGuards, Delete, Req, Res, HttpStatus } from '@nestjs/common';
 import {
   Controller,
   Get,
@@ -79,5 +80,30 @@ export class FhirController {
   async cancelExport(@Param('jobId') jobId: string, @Req() req: any, @Res() res: Response) {
     await this.bulkExportService.cancelJob(jobId, req.user.id, req.user.role);
     res.status(HttpStatus.NO_CONTENT).send();
+=======
+import { Controller, Post, Body, Param } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { FhirService } from '../services/fhir.service';
+
+@ApiTags('FHIR R4')
+@Controller('fhir')
+export class FhirController {
+  constructor(private readonly fhirService: FhirService) {}
+
+  @Post('convert/:resourceType')
+  @ApiOperation({ summary: 'Convert internal entity to FHIR resource' })
+  @ApiResponse({ status: 200, description: 'Conversion successful' })
+  @ApiResponse({ status: 400, description: 'Mapping validation failed' })
+  convertToFhir(@Param('resourceType') resourceType: string, @Body() entity: any) {
+    return this.fhirService.convertToFhir(resourceType, entity);
+  }
+
+  @Post('import')
+  @ApiOperation({ summary: 'Import FHIR resource to internal entity' })
+  @ApiResponse({ status: 200, description: 'Import successful' })
+  @ApiResponse({ status: 400, description: 'Validation failed' })
+  importFromFhir(@Body() resource: any) {
+    return this.fhirService.convertFromFhir(resource);
+ Stashed changes
   }
 }
