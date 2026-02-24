@@ -17,8 +17,12 @@ import { PharmacyModule } from './pharmacy/pharmacy.module';
 import { InfectionControlModule } from './infection-control/infection-control.module';
 import { EmergencyOperationsModule } from './emergency-operations/emergency-operations.module';
 import { AccessControlModule } from './access-control/access-control.module';
+<<<<<<< Updated upstream
 import { ReportsModule } from './reports/reports.module';
 import { TenantModule } from './tenant/tenant.module';
+=======
+import { FhirModule } from './fhir/fhir.module';
+>>>>>>> Stashed changes
 import { DatabaseConfig } from './config/database.config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -130,11 +134,15 @@ import { AuditModule } from './common/audit/audit.module';
     QueueModule,
     FhirModule,
     AccessControlModule,
+<<<<<<< Updated upstream
     JobsModule,
     StellarModule,
     AuditModule,
     ReportsModule,
     TenantConfigModule,
+=======
+    FhirModule,
+>>>>>>> Stashed changes
   ],
   controllers: [AppController],
   providers: [
