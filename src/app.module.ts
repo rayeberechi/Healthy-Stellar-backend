@@ -19,15 +19,8 @@ import { EmergencyOperationsModule } from './emergency-operations/emergency-oper
 import { AccessControlModule } from './access-control/access-control.module';
 import { ReportsModule } from './reports/reports.module';
 import { TenantModule } from './tenant/tenant.module';
-import { FhirModule } from './fhir/fhir.module';
-=======
-import { EmergencyOperationsModule } from './emergency-operations/emergency-operations.module';
-import { NotificationsModule } from './notifications/notifications.module';
-import { QueueModule } from './queues/queue.module';
-import { FhirModule } from './fhir/fhir.module';
-import { AccessControlModule } from './access-control/access-control.module';
-import { StellarModule } from './stellar/stellar.module';
- main
+import { I18nModule, AcceptLanguageResolver } from 'nestjs-i18n';
+import * as path from 'path';
 import { DatabaseConfig } from './config/database.config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -130,6 +123,14 @@ const getUserTrackerFromRequest = (req: any): string => {
       imports: [ConfigModule],
       useClass: ThrottlerConfigService,
     }),
+    I18nModule.forRoot({
+      fallbackLanguage: 'en',
+      loaderOptions: {
+        path: path.join(__dirname, '/i18n/'),
+        watch: true,
+      },
+      resolvers: [AcceptLanguageResolver],
+    }),
     // Application modules
     TenantModule,
     CommonModule,
@@ -155,10 +156,7 @@ const getUserTrackerFromRequest = (req: any): string => {
     AuditModule,
     ReportsModule,
     TenantConfigModule,
-    FhirModule,
-=======
     GdprModule,
- main
   ],
   controllers: [AppController],
   providers: [
