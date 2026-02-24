@@ -22,12 +22,12 @@ export default function () {
     headers,
   });
   check(auditRes, {
-    'audit logs status ok': (r) => r.status < 500,
+    'audit logs status 200': (r) => r.status === 200,
   });
 
   const patientRes = http.get(`${BASE_URL}/patients?search=`, { headers });
   check(patientRes, {
-    'patients status ok': (r) => r.status < 500,
+    'patients status 200': (r) => r.status === 200,
   });
 
   sleep(1);
