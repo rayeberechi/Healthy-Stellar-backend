@@ -1,4 +1,7 @@
 import { APP_FILTER, APP_GUARD, APP_PIPE, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { ConfigModule } from '@nestjs/config';
+import { Module } from '@nestjs/common';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
@@ -17,7 +20,6 @@ import { PharmacyModule } from './pharmacy/pharmacy.module';
 import { InfectionControlModule } from './infection-control/infection-control.module';
 import { EmergencyOperationsModule } from './emergency-operations/emergency-operations.module';
 import { AccessControlModule } from './access-control/access-control.module';
-import { ReportsModule } from './reports/reports.module';
 import { TenantModule } from './tenant/tenant.module';
 import { I18nModule, AcceptLanguageResolver } from 'nestjshelp me solve this fronted issue as a single resource with this #50 Engagement Rewards UI/2
 Repo Avatar hman38705/socialflow-ai-dashboard
@@ -30,10 +32,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { EmergencyOperationsModule } from './emergency-operations/emergency-operations.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { QueueModule } from './queues/queue.module';
-import { FhirModule } from './fhir/fhir.module';
-import { AccessControlModule } from './access-control/access-control.module';
 import { StellarModule } from './stellar/stellar.module';
- main
 import { DatabaseConfig } from './config/database.config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -41,17 +40,19 @@ import { HealthModule } from './health/health.module';
 import { ValidationModule } from './common/validation/validation.module';
 import { MedicalEmergencyErrorFilter } from './common/errors/medical-emergency-error.filter';
 import { MedicalDataValidationPipe } from './common/validation/medical-data.validator.pipe';
-import { NotificationsModule } from './notifications/notifications.module';
-import { QueueModule } from './queues/queue.module';
 import { TenantConfigModule } from './tenant-config/tenant-config.module';
 import { GdprModule } from './gdpr/gdpr.module';
 import { TenantInterceptor } from './tenant/interceptors/tenant.interceptor';
 import { JobsModule } from './jobs/jobs.module';
 import { AuditModule } from './common/audit/audit.module';
-import { FhirModule } from './fhir/fhir.module';
-import { StellarModule } from './stellar/stellar.module';
 import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard';
 import { ThrottlerConfigService } from './common/throttler/throttler-config.service';
+import { CircuitBreakerModule } from './common/circuit-breaker/chelp me solve this fronted issue as a single resource with this #50 Engagement Rewards UI/2
+Repo Avatar hman38705/socialflow-ai-dashboard
+
+Descriptions:
+##issue 108.2:ircuit-breaker.module';
+import { CircuitBreakerExceptionFilter } from './common/circuit-breaker/filters/circuit-breaker-exception.filter';
 import { MetricsModule } from './metrics/metrics.module';
 import { LoggerModule } from './common/logger/logger.module';
 import { RequestContextMiddleware } from './common/middleware/request-context.middleware';
@@ -133,13 +134,12 @@ const getUserTrackerFromRequest = (req: any): string => {
     TypeOrmModule.forRootAsync({
       useClass: DatabaseConfig,
     }),
-    // Rate limiting with Redis-backed storage
     ScheduleModule.forRoot(),
-    // Rate limiting and throttling for security
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       useClass: ThrottlerConfigService,
     }),
+    CircuitBreakerModule,
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {
@@ -172,7 +172,6 @@ const getUserTrackerFromRequest = (req: any): string => {
     JobsModule,
     StellarModule,
     AuditModule,
-    ReportsModule,
     TenantConfigModule,
     FhirModule,
     AnalyticsModule,
@@ -188,6 +187,10 @@ const getUserTrackerFromRequest = (req: any): string => {
     {
       provide: APP_FILTER,
       useClass: MedicalEmergencyErrorFilter,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: CircuitBreakerExceptionFilter,
     },
     {
       provide: APP_PIPE,
