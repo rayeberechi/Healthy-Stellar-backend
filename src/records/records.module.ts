@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MulterModule } from '@nestjs/platform-express';
 import { Record } from './entities/record.entity';
@@ -8,6 +8,7 @@ import { IpfsService } from './services/ipfs.service';
 import { StellarService } from './services/stellar.service';
 import { IpfsWithBreakerService } from './services/ipfs-with-breaker.service';
 import { CircuitBreakerModule } from '../common/circuit-breaker/circuit-breaker.module';
+import { AccessControlModule } from '../access-control/access-control.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { CircuitBreakerModule } from '../common/circuit-breaker/circuit-breaker.
       },
     }),
     CircuitBreakerModule,
+    forwardRef(() => AccessControlModule),
   ],
   controllers: [RecordsController],
   providers: [RecordsService, IpfsService, StellarService, IpfsWithBreakerService],

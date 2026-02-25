@@ -8,6 +8,7 @@ import {
   UploadedFile,
   UseInterceptors,
   BadRequestException,
+  Req,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
@@ -34,7 +35,7 @@ export class RecordsController {
   )
   async uploadRecord(@Body() dto: CreateRecordDto, @UploadedFile() file: Express.Multer.File) {
     if (!file) {
-      throw new BadRequestException(I18nContext.current()?.t('errors.ENCRYPTED_RECORD_FILE_IS_REQUIRED') || 'Encrypted record file is required');
+      throw new BadRequestException('Encrypted record file is required');
     }
 
     return this.recordsService.uploadRecord(dto, file.buffer);
@@ -98,7 +99,8 @@ export class RecordsController {
   @ApiOperation({ summary: 'Get a single record by ID' })
   @ApiResponse({ status: 200, description: 'Record retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Record not found' })
-  async findOne(@Param('id') id: string) {
-    return this.recordsService.findOne(id);
+  async findOne(@Param('id') id: string, @Req() req: any) {
+    const requesterId = req.user?.userId || req.user?.id;
+    return this.recordsService.findOne(id, requesterId);
   }
 }

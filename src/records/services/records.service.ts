@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, Between } from 'typeorm';
 import { Record } from '../entities/record.entity';
@@ -7,6 +7,8 @@ import { PaginationQueryDto } from '../dto/pagination-query.dto';
 import { PaginatedRecordsResponseDto, PaginationMeta } from '../dto/paginated-response.dto';
 import { IpfsService } from './ipfs.service';
 import { StellarService } from './stellar.service';
+import { AccessControlService } from '../../access-control/services/access-control.service';
+import { AuditLogService } from '../../common/services/audit-log.service';
 
 @Injectable()
 export class RecordsService {
@@ -15,6 +17,9 @@ export class RecordsService {
     private recordRepository: Repository<Record>,
     private ipfsService: IpfsService,
     private stellarService: StellarService,
+    @Inject(forwardRef(() => AccessControlService))
+    private accessControlService: AccessControlService,
+    private auditLogService: AuditLogService,
   ) {}
 
   async uploadRecord(
@@ -105,7 +110,32 @@ export class RecordsService {
     };
   }
 
-  async findOne(id: string): Promise<Record> {
-    return this.recordRepository.findOne({ where: { id } });
+  async findOne(id: string, requesterId?: string): Promise<Record> {
+    const record = await this.recordRepository.findOne({ where: { id } });
+    
+    if (record && requesterId) {
+      const emergencyGrant = await this.accessControlService.findActiveEmergencyGrant(
+        record.patientId,
+        requesterId,
+        id,
+      );
+
+      if (emergencyGrant) {
+        await this.auditLogService.create({
+          operation: 'EMERGENCY_ACCESS',
+          entityType: 'records',
+          entityId: id,
+          userId: requesterId,
+          status: 'success',
+          newValues: {
+            patientId: record.patientId,
+            grantId: emergencyGrant.id,
+            recordId: id,
+          },
+        });
+      }
+    }
+    
+    return record;
   }
 }
