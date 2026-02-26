@@ -60,7 +60,7 @@
           "patientId": { "type": "string" },
           "uploaderId": { "type": "string" },
           "contentHash": { "type": "string", "description": "SHA-256 hash of the record file" },
-          "ipfsCid": { "type": "string", "description": "IPFS Content Identifier" },
+          "ipfsHash": { "type": "string", "description": "IPFS hash/Content Identifier" },
           "metadata": { "$ref": "#/components/schemas/RecordMetadata" },
           "createdAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" }
